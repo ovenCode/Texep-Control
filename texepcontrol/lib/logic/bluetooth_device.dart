@@ -8,14 +8,37 @@ class BluetoothDevice {
   String? deviceName;
   List<Uuid?>? services;
   List<QualifiedCharacteristic?>? characteristic;
+  List<int?>? manufacturerData;
+
+  bool connected = false;
 
   BluetoothDevice() {
     deviceId = "";
     deviceName = "";
     services = [null];
     characteristic = [null];
+    manufacturerData = [];
   }
 
-  BluetoothDevice.definedDevice(
-      this.deviceId, this.deviceName, this.services, this.characteristic);
+  BluetoothDevice.definedDevice(this.deviceId, this.deviceName, this.services,
+      this.characteristic, this.manufacturerData);
+
+  BluetoothDevice.fromDiscovered(DiscoveredDevice? device) {
+    deviceId = device?.id;
+    deviceName = device?.name;
+    services = device?.serviceUuids;
+    manufacturerData = device?.manufacturerData;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (other is BluetoothDevice) {
+      return deviceId == other.deviceId && deviceName == other.deviceName;
+    } else {
+      return false;
+    }
+  }
+
+  @override
+  int get hashCode => deviceId.hashCode;
 }
