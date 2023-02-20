@@ -24,4 +24,25 @@ class ScanException implements Exception {
   }
 }
 
-class ConnectionException implements Exception {}
+class ConnectionException implements Exception {
+  String errorInfo;
+  ConnectionException(this.errorInfo);
+  void showErrorDialog(BuildContext context, String errorMessage) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Error"),
+          content: Text(errorMessage),
+          actions: [
+            TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text("Return"))
+          ],
+        );
+      },
+    );
+  }
+}

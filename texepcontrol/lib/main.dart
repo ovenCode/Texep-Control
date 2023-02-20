@@ -115,39 +115,39 @@ class _MyHomePageState extends State<MyHomePage>
   Widget build(BuildContext context) {
     log("MyHomePage: Building HomePage");
 
-    try {
-      log("MyHomePage::1stTryCatch: Trying to get devices");
-      Future<List<BluetoothDevice?>?> getDevices =
-          Future(() async => manager.deviceSearch());
-      getDevices.then(
-          (value) => {
-                Scaffold(
-                    appBar: AppBar(),
-                    body: Center(
-                      child: Column(
-                        children: [
-                          ListView.builder(
-                            itemBuilder: (context, index) {
-                              return SizedBox(
-                                height: 40,
-                                child: Center(
-                                  child: Text("Entry ${value?[index]}"),
-                                ),
-                              );
-                            },
-                          ),
-                          Center(
-                            child: Text("Bluetooth status: ${manager.status}"),
-                          ),
-                        ],
-                      ),
-                    ))
-              }, onError: (e) {
-        throw ScanException(e);
-      });
-    } on ScanException catch (e) {
-      e.showErrorDialog(context, e.toString());
-    }
+    // try {
+    //   log("MyHomePage::1stTryCatch: Trying to get devices");
+    //   Future<List<BluetoothDevice?>?> getDevices =
+    //       Future(() async => manager.deviceSearch());
+    //   getDevices.then(
+    //       (value) => {
+    //             Scaffold(
+    //                 appBar: AppBar(),
+    //                 body: Center(
+    //                   child: Column(
+    //                     children: [
+    //                       ListView.builder(
+    //                         itemBuilder: (context, index) {
+    //                           return SizedBox(
+    //                             height: 40,
+    //                             child: Center(
+    //                               child: Text("Entry ${value?[index]}"),
+    //                             ),
+    //                           );
+    //                         },
+    //                       ),
+    //                       Center(
+    //                         child: Text("Bluetooth status: ${manager.status}"),
+    //                       ),
+    //                     ],
+    //                   ),
+    //                 ))
+    //           }, onError: (e) {
+    //     throw ScanException(e);
+    //   });
+    // } on ScanException catch (e) {
+    //   e.showErrorDialog(context, e.toString());
+    // }
 
     // return DefaultTabController(
     //     length: myTabs.length,
@@ -234,11 +234,12 @@ class _MyHomePageState extends State<MyHomePage>
                     builder: (context, snapshot) {
                       try {
                         if (snapshot.hasData) {
-                          log("MyHomePage::StreamBuilder: Snapshot has data: ${snapshot.data.toString()}");
-                          // if (!bluetoothDevices.contains(
-                          //    BluetoothDevice.fromDiscovered(snapshot.data))) {
-                          bluetoothDevices.add(
-                              BluetoothDevice.fromDiscovered(snapshot.data));
+                          //log("MyHomePage::StreamBuilder: Snapshot has data: ${snapshot.data.toString()}");
+                          if (!bluetoothDevices.contains(
+                              BluetoothDevice.fromDiscovered(snapshot.data))) {
+                            bluetoothDevices.add(
+                                BluetoothDevice.fromDiscovered(snapshot.data));
+                          }
                           return ListView.builder(
                             itemCount: bluetoothDevices.length,
                             itemBuilder: (context, index) {
@@ -253,15 +254,22 @@ class _MyHomePageState extends State<MyHomePage>
                                           context, deviceViewRoute,
                                           arguments: {
                                             "bluetoothDevice":
-                                                BluetoothDevice.definedDevice(
-                                              bluetoothDevices[index].deviceId,
-                                              bluetoothDevices[index]
-                                                  .deviceName,
-                                              bluetoothDevices[index].services,
-                                              [],
-                                              bluetoothDevices[index]
-                                                  .manufacturerData,
-                                            )
+                                                bluetoothDevices[index],
+                                            "connectionStream":
+                                                manager.connectToDevice(
+                                                    bluetoothDevices[index]
+                                                        .deviceId,
+                                                    null,
+                                                    const Duration(seconds: 8))
+                                            //   BluetoothDevice.definedDevice(
+                                            // bluetoothDevices[index].deviceId,
+                                            // bluetoothDevices[index]
+                                            //     .deviceName,
+                                            // bluetoothDevices[index].services,
+                                            // [],
+                                            // bluetoothDevices[index]
+                                            //     .manufacturerData,
+                                            // )
                                           });
                                     },
                                   ),
@@ -335,7 +343,9 @@ class _MyHomePageState extends State<MyHomePage>
               ),
               floatingActionButton: FloatingActionButton(
                 onPressed: () async {
-                  await manager.deviceSearch();
+                  final list = await manager.deviceSearch();
+
+                  log("ListAnswer: ${list?[0]?.deviceId.toString()}");
                 },
                 tooltip: 'Refresh',
                 backgroundColor: const Color.fromARGB(0xFF, 0x3a, 0x26, 0x13),
@@ -376,10 +386,10 @@ class _MyHomePageState extends State<MyHomePage>
       });
     }
 
-    for (var key
-        in manager.flutterReactiveBle.scanRegistry.discoveredDevices.keys) {
-      bluetoothDevices.add(BluetoothDevice.definedDevice("", key, [], [], []));
-    }
+    // for (var key
+    //     in manager.flutterReactiveBle.scanRegistry.discoveredDevices.keys) {
+    //   bluetoothDevices.add(BluetoothDevice.definedDevice("", key, [], [], []));
+    // }
   }
 }
 

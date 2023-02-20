@@ -64,7 +64,7 @@ class BluetoothManager {
   Future<List<BluetoothDevice?>?> deviceSearch() async {
     log("BluetoothManager: Starting scan for devices");
     scanStreamSub = flutterReactiveBle.scanForDevices(
-        withServices: [], scanMode: ScanMode.balanced).listen((device) {
+        withServices: [], scanMode: ScanMode.lowLatency).listen((device) {
       // handling
       devices?.add(BluetoothDevice.definedDevice(device.id, device.name,
           device.serviceUuids, [], device.manufacturerData));
@@ -83,12 +83,16 @@ class BluetoothManager {
     scanStreamSub = flutterReactiveBle.scanForDevices(
         withServices: [], scanMode: ScanMode.balanced).listen((device) {
       // handling
-      devices?.add(BluetoothDevice.definedDevice(device.id, device.name,
-          device.serviceUuids, [null], device.manufacturerData));
+      // devices?.add(BluetoothDevice.definedDevice(device.id, device.name,
+      //     device.serviceUuids, [null], device.manufacturerData));
       searchDevice = device;
-      devices?.add(BluetoothDevice.fromDiscovered(searchDevice));
+      if (devices?.contains(BluetoothDevice.fromDiscovered(searchDevice)) ==
+          false) {
+        devices?.add(BluetoothDevice.fromDiscovered(searchDevice));
+      }
     }, onError: (e) {
       // error handling
+      scanStreamSub?.cancel();
       throw ScanException(e.toString());
     });
     await for (var device
@@ -97,23 +101,53 @@ class BluetoothManager {
     }
   }
 
-  BluetoothDevice connectToDevice(
+  void stopScan() {
+    scanStreamSub?.cancel();
+  }
+
+  Stream<ConnectionStateUpdate> connectToDevice(
       foundDeviceId, serviceIds, connectionTimeout) {
-    BluetoothDevice device = BluetoothDevice();
-    flutterReactiveBle
-        .connectToDevice(
+    log("BluetoothManager: Attempting to connect to device: ");
+    Stream<ConnectionStateUpdate> connectionStream =
+        flutterReactiveBle.connectToDevice(
             id: foundDeviceId,
             servicesWithCharacteristicsToDiscover: serviceIds,
-            connectionTimeout: connectionTimeout)
-        .listen((connectionState) {
-      device = BluetoothDevice();
+            connectionTimeout: connectionTimeout);
+    return connectionStream;
+  }
+
+  StreamSubscription<ConnectionStateUpdate> connectToDeviceSub(
+      foundDeviceId, serviceIds, connectionTimeout) {
+    log("BluetoothManager: Attempting to connect to device: ");
+    StreamSubscription<ConnectionStateUpdate> connectionStream =
+        flutterReactiveBle
+            .connectToDevice(
+                id: foundDeviceId,
+                servicesWithCharacteristicsToDiscover: serviceIds,
+                connectionTimeout: connectionTimeout)
+            .listen((connectionState) {
+      if (connectionState.connectionState == DeviceConnectionState.connecting) {
+        log("BluetoothManager: Connecting to device...");
+      }
+      if (connectionState.connectionState == DeviceConnectionState.connected) {
+        log("BluetoothManager: Connection success");
+      }
 
       // handling
     }, onError: (e) {
       // error handling
-      throw ConnectionException();
+      throw ConnectionException(e.toString());
     });
 
-    return device;
+    return connectionStream;
+  }
+
+  Future<List<int>> readCharacteristic(
+      int deviceId, int characteristicId) async {
+    List<int> answer = await flutterReactiveBle.readCharacteristic(
+        devices?[deviceId]?.characteristic?[characteristicId]
+            as QualifiedCharacteristic);
+
+    return answer;
   }
 }
