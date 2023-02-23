@@ -38,6 +38,9 @@ dependencies:
   cupertino_icons: ^1.0.2
   flutter_reactive_ble: ^5.0.3
   permission_handler: ^10.2.0
+  mqtt_client: ^9.7.4
+  #device_apps:
+  #url_launcher:
 
 dev_dependencies:
   flutter_test:

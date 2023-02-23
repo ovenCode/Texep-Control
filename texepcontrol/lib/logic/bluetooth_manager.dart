@@ -16,6 +16,7 @@ class BluetoothManager {
   String? status = "";
   List<BluetoothDevice?>? devices = [];
   DiscoveredDevice? searchDevice;
+  StreamSubscription<ConnectionStateUpdate>? connectionStream;
   StreamSubscription<DiscoveredDevice?>? scanStreamSub;
   Stream<DiscoveredDevice?>? scanStream;
 
@@ -23,12 +24,8 @@ class BluetoothManager {
 
   BluetoothManager();
 
-  String? getStatus() {
-    flutterReactiveBle.statusStream.listen((statusInfo) {
-      status = statusInfo.toString();
-    });
-
-    return flutterReactiveBle.status.toString();
+  Stream<BleStatus> get getStatus {
+    return flutterReactiveBle.statusStream;
   }
 
   Future<void> checkPermissons() async {
@@ -63,19 +60,24 @@ class BluetoothManager {
 
   Future<List<BluetoothDevice?>?> deviceSearch() async {
     log("BluetoothManager: Starting scan for devices");
-    scanStreamSub = flutterReactiveBle.scanForDevices(
-        withServices: [], scanMode: ScanMode.lowLatency).listen((device) {
-      // handling
-      devices?.add(BluetoothDevice.definedDevice(device.id, device.name,
-          device.serviceUuids, [], device.manufacturerData));
-      searchDevice = device;
-      devices?.add(BluetoothDevice.fromDiscovered(searchDevice));
-    }, onError: (e) {
-      // error handling
-      throw ScanException(e.toString());
-    });
+    if (scanStreamSub != null) {
+      scanStreamSub?.cancel();
+      return [];
+    } else {
+      scanStreamSub = flutterReactiveBle.scanForDevices(
+          withServices: [], scanMode: ScanMode.lowLatency).listen((device) {
+        // handling
+        devices?.add(BluetoothDevice.definedDevice(device.id, device.name,
+            device.serviceUuids, [], device.manufacturerData));
+        searchDevice = device;
+        devices?.add(BluetoothDevice.fromDiscovered(searchDevice));
+      }, onError: (e) {
+        // error handling
+        throw ScanException(e.toString());
+      });
 
-    return devices;
+      return devices;
+    }
   }
 
   Stream<DiscoveredDevice> deviceSearchStream() async* {
@@ -105,49 +107,69 @@ class BluetoothManager {
     scanStreamSub?.cancel();
   }
 
-  Stream<ConnectionStateUpdate> connectToDevice(
-      foundDeviceId, serviceIds, connectionTimeout) {
-    log("BluetoothManager: Attempting to connect to device: ");
-    Stream<ConnectionStateUpdate> connectionStream =
-        flutterReactiveBle.connectToDevice(
-            id: foundDeviceId,
-            servicesWithCharacteristicsToDiscover: serviceIds,
-            connectionTimeout: connectionTimeout);
-    return connectionStream;
+  void connectToDevice(foundDeviceId, serviceIds, connectionTimeout) {
+    if (connectionStream != null) {
+      connectionStream?.cancel();
+    } else {
+      log("BluetoothManager: Attempting to connect to device: ");
+      connectionStream = flutterReactiveBle
+          .connectToDevice(
+              id: foundDeviceId,
+              servicesWithCharacteristicsToDiscover: serviceIds,
+              connectionTimeout: connectionTimeout)
+          .listen((event) {}, onError: (e) {
+        throw ConnectionException(e.toString());
+      });
+    }
   }
 
-  StreamSubscription<ConnectionStateUpdate> connectToDeviceSub(
-      foundDeviceId, serviceIds, connectionTimeout) {
-    log("BluetoothManager: Attempting to connect to device: ");
-    StreamSubscription<ConnectionStateUpdate> connectionStream =
-        flutterReactiveBle
-            .connectToDevice(
-                id: foundDeviceId,
-                servicesWithCharacteristicsToDiscover: serviceIds,
-                connectionTimeout: connectionTimeout)
-            .listen((connectionState) {
-      if (connectionState.connectionState == DeviceConnectionState.connecting) {
-        log("BluetoothManager: Connecting to device...");
-      }
-      if (connectionState.connectionState == DeviceConnectionState.connected) {
-        log("BluetoothManager: Connection success");
-      }
+  // StreamSubscription<ConnectionStateUpdate> connectToDeviceSub(
+  //     foundDeviceId, serviceIds, connectionTimeout) {
+  //   log("BluetoothManager: Attempting to connect to device: ");
+  //   StreamSubscription<ConnectionStateUpdate> connectionStream =
+  //       flutterReactiveBle
+  //           .connectToDevice(
+  //               id: foundDeviceId,
+  //               servicesWithCharacteristicsToDiscover: serviceIds,
+  //               connectionTimeout: connectionTimeout)
+  //           .listen((connectionState) {
+  //     if (connectionState.connectionState == DeviceConnectionState.connecting) {
+  //       log("BluetoothManager: Connecting to device...");
+  //     }
+  //     if (connectionState.connectionState == DeviceConnectionState.connected) {
+  //       log("BluetoothManager: Connection success");
+  //     }
 
-      // handling
-    }, onError: (e) {
-      // error handling
-      throw ConnectionException(e.toString());
-    });
+  //     // handling
+  //   }, onError: (e) {
+  //     // error handling
+  //     throw ConnectionException(e.toString());
+  //   });
 
-    return connectionStream;
-  }
+  //   return connectionStream;
+  // }
 
   Future<List<int>> readCharacteristic(
       int deviceId, int characteristicId) async {
-    List<int> answer = await flutterReactiveBle.readCharacteristic(
-        devices?[deviceId]?.characteristic?[characteristicId]
-            as QualifiedCharacteristic);
+    QualifiedCharacteristic characteristic = QualifiedCharacteristic(
+        characteristicId: characteristicId as Uuid,
+        serviceId: devices
+            ?.firstWhere((element) => element?.deviceId == deviceId.toString())
+            ?.services?[0] as Uuid,
+        deviceId: deviceId.toString());
+    List<int> answer =
+        await flutterReactiveBle.readCharacteristic(characteristic);
 
     return answer;
+  }
+
+  Future<void> writeCharacteristic(
+      QualifiedCharacteristic characteristic, List<int> value) async {
+    Future<void> resolve = flutterReactiveBle
+        .writeCharacteristicWithResponse(characteristic, value: value);
+
+    resolve.onError((error, stackTrace) =>
+        throw WritingException(error.toString(), stackTrace));
+    log("writeSuccess");
   }
 }

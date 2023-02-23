@@ -44,7 +44,16 @@
 	<string>Need Location permission</string>  
 	<key>NSLocationWhenInUseUsageDescription</key>  
 	<string>Need Location permission</string>
-	
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Looking for local tcp Bonjour service</string>
+	<key>NSBonjourServices</key>
+	<array>
+	<string>mqtt.tcp</string>
+	</array>
+	<key>LSApplicationQueriesSchemes</key>
+<array>
+  <string>victronconnect</string>
+</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

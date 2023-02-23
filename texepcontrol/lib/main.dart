@@ -14,35 +14,61 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   BluetoothManager manager = BluetoothManager();
 
-  manager.checkPermissons();
-  runApp(MaterialApp(
-    title: 'Flutter Demo',
-    theme: ThemeData(
-      primarySwatch: ColorsExt.brown500Swatch,
-    ),
-    home: const MyHomePage(title: 'Texep Control'),
-    routes: {
-      homePageRoute: (context) => const MyHomePage(title: 'Texep Control'),
-      sideBarRoute: (context) => const SideBarMenu(),
-      deviceViewRoute: (
-        context,
-      ) =>
-          DeviceView(key: Key(""), bluetoothDevice: BluetoothDevice()),
-    },
-  ));
+  try {
+    manager.getStatus.listen((event) {
+      if (event == BleStatus.ready) {
+        log("main: BluetoothManager is ready, starting app.");
+        manager.checkPermissons();
+        runApp(MaterialApp(
+          title: 'Flutter Demo',
+          theme: ThemeData(
+            primarySwatch: ColorsExt.brown500Swatch,
+          ),
+          home: MyHomePage(title: 'Texep Control'),
+          routes: {
+            homePageRoute: (context) => MyHomePage(title: 'Texep Control'),
+            sideBarRoute: (context) => const SideBarMenu(),
+            // deviceViewRoute: (
+            //   context,
+            // ) =>
+            //     DeviceView(key: UniqueKey(), bluetoothDevice: BluetoothDevice()),
+          },
+          onGenerateRoute: (settings) {
+            final DeviceViewArguments arguments =
+                settings.arguments as DeviceViewArguments;
+            Map<Object?, WidgetBuilder> routes = <Object?, WidgetBuilder>{
+              "deviceView": (ctx) => DeviceView(
+                  key: arguments.key,
+                  bluetoothDevice: arguments.bluetoothDevice,
+                  connectionStream: arguments.connectionStream),
+            };
+            WidgetBuilder builder = routes[settings.name] as WidgetBuilder;
+
+            return MaterialPageRoute(
+                builder: (ctx) => builder(ctx), settings: settings);
+          },
+        ));
+      } else {
+        throw BluetoothException(event.toString());
+      }
+    });
+  } on BluetoothException catch (e) {
+    log(e.errorInfo);
+  }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+  MyHomePage({super.key, required this.title});
 
   final String title;
+  String buttonTitle = "";
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   static const List<Tab> myTabs = <Tab>[
     Tab(text: 'LOCAL'),
     Tab(text: 'REMOTE'),
@@ -51,7 +77,7 @@ class _MyHomePageState extends State<MyHomePage>
   late TabController _tabController;
   BluetoothManager manager = BluetoothManager();
   List<BluetoothDevice> bluetoothDevices = [];
-  Stream<DiscoveredDevice> scannedDevices = Stream.empty();
+  Stream<DiscoveredDevice> scannedDevices = const Stream.empty();
 
   @override
   void initState() {
@@ -68,6 +94,9 @@ class _MyHomePageState extends State<MyHomePage>
     _tabController.dispose();
     super.dispose();
   }
+
+  @override
+  bool get wantKeepAlive => true;
 
   // leading: IconButton(
   //         icon: const Icon(
@@ -113,6 +142,7 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     log("MyHomePage: Building HomePage");
 
     // try {
@@ -199,6 +229,9 @@ class _MyHomePageState extends State<MyHomePage>
               if (!controller.indexIsChanging) {
                 log("MyHomePage::TabController: Index is not changing");
               }
+              if (controller.indexIsChanging) {
+                log("MyHomePage::TabController: tabIndex is changing");
+              }
             });
 
             return Scaffold(
@@ -230,7 +263,7 @@ class _MyHomePageState extends State<MyHomePage>
 
                   return Center(
                       child: StreamBuilder(
-                    stream: manager.deviceSearchStream(),
+                    stream: scannedDevices,
                     builder: (context, snapshot) {
                       try {
                         if (snapshot.hasData) {
@@ -243,34 +276,48 @@ class _MyHomePageState extends State<MyHomePage>
                           return ListView.builder(
                             itemCount: bluetoothDevices.length,
                             itemBuilder: (context, index) {
+                              log("ListViewBuilder: Got device ${bluetoothDevices[index]}");
+                              widget.buttonTitle =
+                                  "${bluetoothDevices[index].deviceName} ${bluetoothDevices[index].deviceId}";
                               return SizedBox(
                                 height: 30,
                                 child: Center(
                                   child: TextButton(
                                     child: Text(
-                                        "${bluetoothDevices[index].deviceName} ${bluetoothDevices[index].deviceId}"),
+                                      widget.buttonTitle,
+                                    ),
                                     onPressed: () {
-                                      Navigator.pushNamed(
-                                          context, deviceViewRoute,
-                                          arguments: {
-                                            "bluetoothDevice":
-                                                bluetoothDevices[index],
-                                            "connectionStream":
-                                                manager.connectToDevice(
-                                                    bluetoothDevices[index]
-                                                        .deviceId,
-                                                    null,
-                                                    const Duration(seconds: 8))
-                                            //   BluetoothDevice.definedDevice(
-                                            // bluetoothDevices[index].deviceId,
-                                            // bluetoothDevices[index]
-                                            //     .deviceName,
-                                            // bluetoothDevices[index].services,
-                                            // [],
-                                            // bluetoothDevices[index]
-                                            //     .manufacturerData,
-                                            // )
-                                          });
+                                      manager.stopScan();
+                                      changeTitle(bluetoothDevices[index]);
+                                      // Navigator.pushNamed(context, "deviceView",
+                                      //     arguments: DeviceViewArguments(
+                                      //         UniqueKey(),
+                                      //         bluetoothDevices[index],
+                                      //         manager.connectToDevice(
+                                      //             bluetoothDevices[index]
+                                      //                 .deviceId,
+                                      //             null,
+                                      //             const Duration(seconds: 8)))
+                                      // {
+                                      //   "bluetoothDevice":
+                                      //       bluetoothDevices[index],
+                                      //   "connectionStream":
+                                      //       manager.connectToDevice(
+                                      //           bluetoothDevices[index]
+                                      //               .deviceId,
+                                      //           null,
+                                      //           const Duration(seconds: 8))
+                                      //   //   BluetoothDevice.definedDevice(
+                                      //   // bluetoothDevices[index].deviceId,
+                                      //   // bluetoothDevices[index]
+                                      //   //     .deviceName,
+                                      //   // bluetoothDevices[index].services,
+                                      //   // [],
+                                      //   // bluetoothDevices[index]
+                                      //   //     .manufacturerData,
+                                      //   // )
+                                      // }
+                                      //);
                                     },
                                   ),
                                 ),
@@ -390,6 +437,52 @@ class _MyHomePageState extends State<MyHomePage>
     //     in manager.flutterReactiveBle.scanRegistry.discoveredDevices.keys) {
     //   bluetoothDevices.add(BluetoothDevice.definedDevice("", key, [], [], []));
     // }
+  }
+
+  void changeTitle(BluetoothDevice device) {
+    log("changeTitle: Initializing fRB and QC");
+    log("changeTitle: Device ${device.deviceId} is also here");
+    FlutterReactiveBle flutterReactiveBle = FlutterReactiveBle();
+    QualifiedCharacteristic characteristic = QualifiedCharacteristic(
+        characteristicId: Uuid([0]),
+        serviceId: device.services?[0] ?? Uuid([0]),
+        deviceId: device.deviceId ?? "");
+    List<int>? values;
+    log("changeTitle: Going into setState");
+    setState(() {
+      try {
+        flutterReactiveBle.connectToDevice(
+            id: device.deviceId ?? "",
+            connectionTimeout: const Duration(seconds: 10),
+            servicesWithCharacteristicsToDiscover: {}).listen((event) {
+          if (event.connectionState == DeviceConnectionState.connecting) {
+            log("FlutterReactiveBle: Connecting to device...");
+          } else if (event.connectionState == DeviceConnectionState.connected) {
+            log("changeTitle: Attempting to read characteristic");
+            flutterReactiveBle
+                .readCharacteristic(characteristic)
+                .then((value) => values = value, onError: (error) {
+              throw ReadingException(error.toString());
+            });
+          }
+        }, onError: (e) {
+          throw ConnectionException(e.errorInfo);
+        });
+      } on ConnectionException catch (e) {
+        e.showErrorDialog(context, e.errorInfo);
+      } on ReadingException catch (e) {
+        e.showErrorDialog(context, e.errorInfo);
+      } catch (e) {
+        log("Error: While trying to connect, an error was encoutered: ${e.toString()}");
+      }
+      log("setState: We tried boys, no success nor exception thrown :(");
+      log(characteristic.toString());
+    });
+    if (values != null) {
+      widget.buttonTitle = values.toString();
+    } else {
+      widget.buttonTitle = "No values yet";
+    }
   }
 }
 
