@@ -39,6 +39,7 @@ dependencies:
   flutter_reactive_ble: ^5.0.3
   permission_handler: ^10.2.0
   mqtt_client: ^9.7.4
+  http:
   #device_apps:
   #url_launcher:
 
