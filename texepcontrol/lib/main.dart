@@ -5,10 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:texepcontrol/constants/colors.dart';
 import 'package:texepcontrol/constants/routes.dart';
-import 'package:texepcontrol/logic/api_service.dart';
+import 'package:texepcontrol/logic/api_services.dart';
 import 'package:texepcontrol/logic/bluetooth_device.dart';
 import 'package:texepcontrol/logic/bluetooth_exceptions.dart';
 import 'package:texepcontrol/logic/bluetooth_manager.dart';
+import 'package:texepcontrol/utils/devlog.dart';
 import 'package:texepcontrol/views/device_view.dart';
 import 'package:texepcontrol/views/login_view.dart';
 
@@ -25,15 +26,18 @@ void main() {
             theme: ThemeData(
               primarySwatch: ColorsExt.brown500Swatch,
             ),
-            home: MyHomePage(title: 'Texep Control'),
+            home: const MyHomePage(title: 'Texep Control'),
             routes: {
-              homePageRoute: (context) => MyHomePage(title: 'Texep Control'),
+              homePageRoute: (context) =>
+                  const MyHomePage(title: 'Texep Control'),
               sideBarRoute: (context) => const SideBarMenu(),
               // deviceViewRoute: (
               //   context,
               // ) =>
               //     DeviceView(key: UniqueKey(), bluetoothDevice: BluetoothDevice()),
-              loginViewRoute: (context) => const LoginView(),
+              loginViewRoute: (context) => LoginView(
+                    apiServices: apiServices,
+                  ),
             },
             onGenerateRoute: (settings) {
               switch (settings.name) {
@@ -53,12 +57,14 @@ void main() {
                       builder: (ctx) => builder(ctx), settings: settings);
                 case homePageRoute:
                   return MaterialPageRoute(
-                    builder: (context) => MyHomePage(title: "Texep Control"),
+                    builder: (context) =>
+                        const MyHomePage(title: "Texep Control"),
                     settings: settings,
                   );
                 default:
                   return MaterialPageRoute(
-                    builder: (context) => MyHomePage(title: "Texep Control"),
+                    builder: (context) =>
+                        const MyHomePage(title: "Texep Control"),
                     settings: settings,
                   );
               }
@@ -77,13 +83,13 @@ void main() {
   }
 }
 
-ApiService apiService = ApiService();
+ApiServices apiServices = ApiServices();
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({super.key, required this.title});
+  const MyHomePage({super.key, required this.title});
 
   final String title;
-  String buttonTitle = "";
+  final String buttonTitle = "";
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -284,14 +290,12 @@ class _MyHomePageState extends State<MyHomePage>
                     return ListView.builder(
                       itemCount: bluetoothDevices.length,
                       itemBuilder: (context, index) {
-                        widget.buttonTitle =
-                            "${bluetoothDevices[index].deviceName} ${bluetoothDevices[index].deviceId}";
                         return SizedBox(
                           height: 30,
                           child: Center(
                             child: TextButton(
                               child: Text(
-                                widget.buttonTitle,
+                                "${bluetoothDevices[index].deviceName} ${bluetoothDevices[index].deviceId}",
                               ),
                               onPressed: () {
                                 manager.stopScan();
@@ -344,28 +348,49 @@ class _MyHomePageState extends State<MyHomePage>
             )),
             Center(child: Builder(
               builder: (context) {
+                Devlog("MyHomePage::Tab2: Building Tab2 Test");
+                Map<String, String> values = {};
+
                 Future.delayed(
                   Duration.zero,
                   () async {
-                    apiService.addService("Victron");
-                    if (apiService.getServices.isNotEmpty) {
+                    apiServices.addService("Victron");
+                    if (apiServices.getServices.isNotEmpty) {
                       //
-                      Map<String, String> values = await Navigator.pushNamed(
-                        context,
-                        loginViewRoute,
-                      ) as Map<String, String>;
+                      values = await Navigator.pushNamedAndRemoveUntil(
+                              context, loginViewRoute, (route) => route.isFirst,
+                              arguments: {"services": apiServices})
+                          as Map<String, String>;
 
-                      log("MyHomePageState::Remote: Token is $values");
+                      log("MyHomePageState::Remote: Token is ${values["token"]}");
 
-                      apiService.setServiceValues = {
+                      apiServices.setServiceValues = {
                         ApiServiceValues.fromString(values):
-                            apiService.getServices[0],
+                            apiServices.getServices[0],
                       };
-                      log(apiService.getServiceValues.toString());
+                      log(apiServices.getServiceValues.toString());
+
+                      if (values.isNotEmpty) {
+                        List<String> sites = ["Test"];
+                        log("Building sites list");
+                        (apiServices.getServices[0]).requestSites();
+                        return ListView.builder(
+                          itemCount: sites.length,
+                          itemBuilder: (context, index) => SizedBox(
+                              height: 30,
+                              child: Center(
+                                  child: TextButton(
+                                child: Text(sites[index]),
+                                onPressed: () {},
+                              ))),
+                        );
+                      }
                     }
                   },
                 );
-                return const Text("Not setup yet.");
+
+                return const Scaffold();
+                //return const Text("Not setup yet.");
               },
             ))
           ] //myTabs.map((Tab tab) {
@@ -500,8 +525,8 @@ class _MyHomePageState extends State<MyHomePage>
               //   } else if (tab.text == "REMOTE") {
               //     return Center(child: Builder(
               //       builder: (context) {
-              //         apiService.addService("Victron");
-              //         if (apiService.getServices?.isNotEmpty ?? true) {
+              //         apiServices.addService("Victron");
+              //         if (apiServices.getServices?.isNotEmpty ?? true) {
               //           Navigator.pushNamed(context, loginViewRoute);
               //         }
               //         return const Text("Not setup yet.");
@@ -601,9 +626,9 @@ class _MyHomePageState extends State<MyHomePage>
       log(characteristic.toString());
     });
     if (values != null) {
-      widget.buttonTitle = values.toString();
+      // values is null
     } else {
-      widget.buttonTitle = "No values yet";
+      // no values yet
     }
   }
 }
@@ -622,8 +647,7 @@ class SideBarMenu extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.of(context)
-                .pushNamedAndRemoveUntil(homePageRoute, (route) => false);
+            Navigator.of(context).pushNamed(homePageRoute);
           },
         ),
       ),

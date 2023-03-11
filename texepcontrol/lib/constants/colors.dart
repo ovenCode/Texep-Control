@@ -16,6 +16,13 @@ class ColorsExt {
     900: Color.fromARGB(255, 194, 111, 34),
   };
 
+  static const Color brown500 = Color(0xFF9a6432);
+
   static const MaterialColor brown500Swatch =
+      MaterialColor(0xFF3a2613, brown500Map);
+
+  static const Color brown100 = Color(0xFF3a2613);
+
+  static const MaterialColor brown100Swatch =
       MaterialColor(0xFF3a2613, brown500Map);
 }

@@ -52,7 +52,8 @@ class ScanException implements Exception {
 class ConnectionException implements Exception {
   String errorInfo;
   ConnectionException(this.errorInfo);
-  void showErrorDialog(BuildContext context, String errorMessage) {
+  Future<void> showErrorDialog(
+      BuildContext context, String errorMessage) async {
     showDialog(
       context: context,
       builder: (context) {
