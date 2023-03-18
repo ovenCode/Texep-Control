@@ -12,6 +12,8 @@ import 'package:texepcontrol/logic/bluetooth_manager.dart';
 import 'package:texepcontrol/utils/devlog.dart';
 import 'package:texepcontrol/views/device_view.dart';
 import 'package:texepcontrol/views/login_view.dart';
+import 'package:texepcontrol/views/settings_view.dart';
+import 'package:texepcontrol/views/site_view.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +40,9 @@ void main() {
               loginViewRoute: (context) => LoginView(
                     apiServices: apiServices,
                   ),
+              siteViewRoute: (context) =>
+                  SiteView(apiServices: apiServices, siteId: "", siteName: ""),
+              settingsViewRoute: (context) => const SettingsView(),
             },
             onGenerateRoute: (settings) {
               switch (settings.name) {
@@ -267,7 +272,10 @@ class _MyHomePageState extends State<MyHomePage>
                   child: const Text("Devices"),
                 ),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.pushNamedAndRemoveUntil(
+                        context, settingsViewRoute, (route) => route.isFirst);
+                  },
                   child: const Text("Settings"),
                 ),
               ],
@@ -348,21 +356,29 @@ class _MyHomePageState extends State<MyHomePage>
             )),
             Center(child: Builder(
               builder: (context) {
+                /** REMOTE TAB DEFINITION
+                 * This tab is supposed to allow remote connections to sites that the user/administrator has added 
+                 * remote configurations. If the user isn't connected show the login screen, where the user can select
+                 * the services to connect to. (For now not implemented, and the user will autoconnecting to the only
+                 * services)
+                 */
                 Devlog("MyHomePage::Tab2: Building Tab2 Test");
                 Map<String, String> values = {};
+                Map<String, String> sites = {};
+                Scaffold answer = const Scaffold(
+                  body: Center(child: Text("No values to show")),
+                );
 
                 Future.delayed(
                   Duration.zero,
                   () async {
-                    apiServices.addService("Victron");
-                    if (apiServices.getServices.isNotEmpty) {
+                    if (apiServices.getServices.isEmpty) {
                       //
+                      apiServices.addService("Victron");
                       values = await Navigator.pushNamedAndRemoveUntil(
                               context, loginViewRoute, (route) => route.isFirst,
                               arguments: {"services": apiServices})
                           as Map<String, String>;
-
-                      log("MyHomePageState::Remote: Token is ${values["token"]}");
 
                       apiServices.setServiceValues = {
                         ApiServiceValues.fromString(values):
@@ -371,26 +387,76 @@ class _MyHomePageState extends State<MyHomePage>
                       log(apiServices.getServiceValues.toString());
 
                       if (values.isNotEmpty) {
-                        List<String> sites = ["Test"];
                         log("Building sites list");
-                        (apiServices.getServices[0]).requestSites();
-                        return ListView.builder(
-                          itemCount: sites.length,
-                          itemBuilder: (context, index) => SizedBox(
-                              height: 30,
-                              child: Center(
-                                  child: TextButton(
-                                child: Text(sites[index]),
-                                onPressed: () {},
-                              ))),
-                        );
+                        (apiServices.getServices[0])
+                            .requestSites()
+                            .whenComplete(<Widget>() {
+                          sites = (apiServices.getServices[0]).getSites;
+                          log("MyHomePageState::Remote: building ListView \n ${sites.toString()} ${sites["name"]}");
+                          answer = Scaffold(
+                            body: Center(
+                              child: ListView.builder(
+                                itemCount: sites.length,
+                                itemBuilder: (context, index) => SizedBox(
+                                    height: 30,
+                                    child: Center(
+                                        child: TextButton(
+                                      child: Text(
+                                          "Site ${index.toString()} ${sites["name"].toString()}"),
+                                      onPressed: () {},
+                                    ))),
+                              ),
+                            ),
+                          );
+                        });
                       }
                     }
                   },
                 );
 
-                return const Scaffold();
-                //return const Text("Not setup yet.");
+                while (apiServices.getServices.isEmpty) {
+                  return answer;
+                }
+
+                return FutureBuilder(
+                  future: (apiServices.getServices[0]).requestSites(),
+                  builder: (context, snapshot) {
+                    switch (snapshot.data) {
+                      case "Success":
+                        sites = (apiServices.getServices[0]).getSites;
+                        answer = Scaffold(
+                          body: Center(
+                            child: ListView.builder(
+                              itemCount: sites.length ~/ 2,
+                              itemBuilder: (context, index) => SizedBox(
+                                  height: 30,
+                                  child: Center(
+                                      child: TextButton(
+                                    child: Text(
+                                        "Site ${(index + 1).toString()} ${sites["name"].toString()}"),
+                                    onPressed: () async {
+                                      Navigator.pushNamedAndRemoveUntil(
+                                          context,
+                                          siteViewRoute,
+                                          (route) => route.isFirst,
+                                          arguments: {
+                                            "apiServices": apiServices,
+                                            "siteId": sites["idSite"],
+                                            "siteTitle": sites["name"]
+                                          });
+                                    },
+                                  ))),
+                            ),
+                          ),
+                        );
+                        log("MyHomePage::FutureBuilder: Snapshot info: ${snapshot.data.toString()}");
+                        return answer;
+
+                      default:
+                        return answer;
+                    }
+                  },
+                );
               },
             ))
           ] //myTabs.map((Tab tab) {

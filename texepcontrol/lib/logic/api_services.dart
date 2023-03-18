@@ -1,4 +1,5 @@
 import 'package:texepcontrol/logic/api_victron.dart';
+import 'package:texepcontrol/logic/iservice.dart';
 
 import 'api_service.dart';
 
@@ -8,10 +9,12 @@ class ApiServices {
   final List<ApiService> _services = [];
   Map<ApiServiceValues, ApiService> _serviceValues = {};
   final Map<String, String> _connectionResponse = {};
+  bool isUserExists = false;
 
   List<ApiService> get getServices => _services;
 
   void addService(String service) {
+    isUserExists = true;
     if (service == "Victron") {
       _services.add(ApiVictron());
     }

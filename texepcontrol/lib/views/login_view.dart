@@ -7,6 +7,9 @@ import 'package:texepcontrol/logic/api_victron.dart';
 import 'package:texepcontrol/logic/bluetooth_exceptions.dart';
 import 'package:texepcontrol/utils/devlog.dart';
 
+/// View that allows user to login to services
+///
+///
 class LoginView extends StatelessWidget {
   final ApiServices apiServices;
   const LoginView({super.key, required this.apiServices});
@@ -32,7 +35,7 @@ class _LoggerState extends State<Logger> {
   final TextEditingController passwordController = TextEditingController();
   ApiServices _apiService = ApiServices();
 
-  bool dataReceived = false;
+  bool dataReceived = false, _isUserLoggedIn = false;
 
   @override
   void initState() {
@@ -52,7 +55,7 @@ class _LoggerState extends State<Logger> {
   Widget build(BuildContext context) {
     Map<String, String>? answer;
     BuildContext back = context;
-    if (!dataReceived) {
+    if (!dataReceived && !_isUserLoggedIn) {
       return Scaffold(
         appBar: AppBar(
           title: const Text("Login"),
@@ -61,26 +64,32 @@ class _LoggerState extends State<Logger> {
         body: Center(
           child: Column(
             children: [
-              Row(
-                children: [
-                  const Text("Login"),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(8.0, 0, 0, 0),
-                    child: SizedBox(
-                        width: 250,
-                        child: TextField(
-                          key: const ValueKey("login"),
-                          controller: loginController,
-                          decoration:
-                              const InputDecoration(hintText: "Enter login"),
-                          keyboardType: TextInputType.emailAddress,
-                        )),
-                  )
-                ],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 15, 0, 0),
+                child: Row(
+                  children: [
+                    const Text("Login"),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(35, 0, 0, 0),
+                      child: SizedBox(
+                          width: 250,
+                          child: TextField(
+                            key: const ValueKey("login"),
+                            controller: loginController,
+                            decoration:
+                                const InputDecoration(hintText: "Enter login"),
+                            keyboardType: TextInputType.emailAddress,
+                          )),
+                    )
+                  ],
+                ),
               ),
               Row(
                 children: [
-                  const Text("Password"),
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(10, 0, 0, 0),
+                    child: Text("Password"),
+                  ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(8.0, 0, 0, 0),
                     child: SizedBox(
@@ -99,7 +108,7 @@ class _LoggerState extends State<Logger> {
                 ],
               ),
               Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(20.0),
                 child: ElevatedButton(
                     onPressed: () async {
                       // TODO: implement onPressed

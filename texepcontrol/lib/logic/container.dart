@@ -1,5 +1,6 @@
 import 'package:texepcontrol/logic/api_service.dart';
 import 'package:texepcontrol/logic/api_services.dart';
+import 'package:texepcontrol/logic/iservice.dart';
 
 ///
 /// ** WORK IN PROGRESS **
@@ -14,6 +15,7 @@ class Container {
   // Services initialization
 
   final ApiServices _apiServices = ApiServices();
+  Object response = Object();
 
   // Service methods
 
@@ -39,4 +41,10 @@ class Container {
         break;
     }
   }
+
+  /// Get specific response from service
+  ///
+  /// Function returns a response of type Object
+  /// containing important information
+  Object getResponse(IService service) => response;
 }

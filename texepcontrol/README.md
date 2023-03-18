@@ -1,16 +1,13 @@
 # texepcontrol
 
-A new Flutter project.
+Sample README
 
-## Getting Started
+## Initial info
 
-This project is a starting point for a Flutter application.
+This is a private repository. The application is developed with Flutter,
+and so far there's no intention of making this repository openly available.
+The app is the property of SABosca and the unauthorized use of it by anyone
+can be treated as reason/offense and be punishable by law.
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+The application is still in its development stage, so many features are still
+either unavailable or not working as intended.

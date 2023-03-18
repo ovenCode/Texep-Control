@@ -15,5 +15,19 @@ abstract class ApiService implements IService {
   /// Method to disconnect from the API Service
   void disconnect();
   Map<String, String> get getConnectionResponse;
-  void requestSites();
+
+  /// requestSites
+  ///
+  /// method to request installation sites
+  Future<String> requestSites();
+
+  Map<String, String> get getSites;
+
+  Future<String> requestSiteDevices(String siteId);
+
+  Map<String, String> get getDeviceNames;
+
+  Future<String> requestSiteStats(String siteId);
+
+  Map<String, String> get getDeviceStats;
 }
