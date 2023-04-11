@@ -2,6 +2,10 @@ import 'package:texepcontrol/logic/api_service.dart';
 import 'package:texepcontrol/logic/api_services.dart';
 import 'package:texepcontrol/logic/iservice.dart';
 
+import '../utils/languages/ilanguage.dart';
+import '../utils/languages/language_eng.dart';
+import '../utils/languages/language_fr.dart';
+
 ///
 /// ** WORK IN PROGRESS **
 ///
@@ -16,6 +20,28 @@ class Container {
 
   final ApiServices _apiServices = ApiServices();
   Object response = Object();
+
+  // Language setup
+
+  ILanguage? language;
+
+  void setLanguage(String lang) {
+    switch (lang) {
+      case "ENG":
+        language = LanguageEng();
+        break;
+      default:
+    }
+    if (lang == "ENG") {
+      language = LanguageEng();
+    } else if (lang == "FR") {
+      language = LanguageFr();
+    }
+  }
+
+  // Language getter
+
+  ILanguage get getLanguage => language!;
 
   // Service methods
 

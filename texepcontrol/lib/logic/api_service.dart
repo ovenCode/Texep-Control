@@ -13,7 +13,7 @@ abstract class ApiService implements IService {
   /// Connection
   ///
   /// Method to disconnect from the API Service
-  void disconnect();
+  Future<String> disconnect();
   Map<String, String> get getConnectionResponse;
 
   /// requestSites
@@ -30,4 +30,18 @@ abstract class ApiService implements IService {
   Future<String> requestSiteStats(String siteId);
 
   Map<String, String> get getDeviceStats;
+
+  /// requestData
+  ///
+  /// Function that returns info on specific data info
+  /// for a service
+  Future<String> requestData(String datatype);
+
+  /// readData
+  ///
+  /// Function that returns constant info from a specific
+  /// endpoint for a service
+  Stream<String> readData(String datatype);
+
+  dynamic getResponse(String request);
 }

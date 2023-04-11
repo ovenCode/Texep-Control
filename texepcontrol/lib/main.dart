@@ -10,14 +10,23 @@ import 'package:texepcontrol/logic/bluetooth_device.dart';
 import 'package:texepcontrol/logic/bluetooth_exceptions.dart';
 import 'package:texepcontrol/logic/bluetooth_manager.dart';
 import 'package:texepcontrol/utils/devlog.dart';
+import 'package:texepcontrol/views/aqsep_view.dart';
 import 'package:texepcontrol/views/device_view.dart';
 import 'package:texepcontrol/views/login_view.dart';
+import 'package:texepcontrol/views/permissions_view.dart';
 import 'package:texepcontrol/views/settings_view.dart';
 import 'package:texepcontrol/views/site_view.dart';
+import 'package:texepcontrol/logic/container.dart' as cont;
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   BluetoothManager manager = BluetoothManager();
+
+  try {
+    _container.setLanguage("ENG");
+  } catch (e) {
+    throw e.toString();
+  }
 
   try {
     manager.getStatus.listen((event) {
@@ -26,10 +35,11 @@ void main() {
         runApp(MaterialApp(
             title: 'Flutter Demo',
             theme: ThemeData(
-              primarySwatch: ColorsExt.brown500Swatch,
-            ),
+                primarySwatch: ColorsExt.brown500Swatch,
+                scaffoldBackgroundColor: Colors.white),
             home: const MyHomePage(title: 'Texep Control'),
             routes: {
+              permissionsViewRoute: (context) => const PermissionsView(),
               homePageRoute: (context) =>
                   const MyHomePage(title: 'Texep Control'),
               sideBarRoute: (context) => const SideBarMenu(),
@@ -43,6 +53,7 @@ void main() {
               siteViewRoute: (context) =>
                   SiteView(apiServices: apiServices, siteId: "", siteName: ""),
               settingsViewRoute: (context) => const SettingsView(),
+              aqsepViewRoute: (context) => const AqSepView(),
             },
             onGenerateRoute: (settings) {
               switch (settings.name) {
@@ -89,6 +100,7 @@ void main() {
 }
 
 ApiServices apiServices = ApiServices();
+cont.Container _container = cont.Container();
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -111,6 +123,7 @@ class _MyHomePageState extends State<MyHomePage>
   BluetoothManager manager = BluetoothManager();
   List<BluetoothDevice> bluetoothDevices = [];
   Stream<DiscoveredDevice> scannedDevices = const Stream.empty();
+  bool isUserLoggedIn = false, isFirstLaunch = false;
 
   @override
   void initState() {
@@ -287,6 +300,10 @@ class _MyHomePageState extends State<MyHomePage>
               stream: scannedDevices,
               builder: (context, snapshot) {
                 try {
+                  if (isFirstLaunch) {
+                    Navigator.pushNamedAndRemoveUntil(
+                        context, permissionsViewRoute, (route) => false);
+                  }
                   if (snapshot.hasData) {
                     //log("MyHomePage::StreamBuilder: Snapshot has data: ${snapshot.data.toString()}");
                     if (!bluetoothDevices.contains(
@@ -369,94 +386,115 @@ class _MyHomePageState extends State<MyHomePage>
                   body: Center(child: Text("No values to show")),
                 );
 
-                Future.delayed(
-                  Duration.zero,
-                  () async {
-                    if (apiServices.getServices.isEmpty) {
-                      //
-                      apiServices.addService("Victron");
-                      values = await Navigator.pushNamedAndRemoveUntil(
-                              context, loginViewRoute, (route) => route.isFirst,
-                              arguments: {"services": apiServices})
-                          as Map<String, String>;
+                if (!isUserLoggedIn) {
+                  apiServices.addService("Victron");
+                  return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ElevatedButton(
+                              onPressed: () async {
+                                values =
+                                    await Navigator.pushNamedAndRemoveUntil(
+                                        context,
+                                        loginViewRoute,
+                                        (route) => route.isFirst,
+                                        arguments: {
+                                      "services": apiServices
+                                    }) as Map<String, String>;
 
-                      apiServices.setServiceValues = {
-                        ApiServiceValues.fromString(values):
-                            apiServices.getServices[0],
-                      };
-                      log(apiServices.getServiceValues.toString());
-
-                      if (values.isNotEmpty) {
-                        log("Building sites list");
-                        (apiServices.getServices[0])
-                            .requestSites()
-                            .whenComplete(<Widget>() {
+                                apiServices.setServiceValues = {
+                                  ApiServiceValues.fromString(values):
+                                      apiServices.getServices[0],
+                                };
+                                log(apiServices.getServiceValues.toString());
+                                setState(() {
+                                  isUserLoggedIn = true;
+                                });
+                              },
+                              child: const Text("Login to Victron")),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ElevatedButton(
+                              onPressed: () {
+                                try {
+                                  Navigator.pushNamedAndRemoveUntil(context,
+                                      aqsepViewRoute, (route) => route.isFirst);
+                                } catch (e) {
+                                  //
+                                }
+                              },
+                              child: const Text("Connect to AqSep")),
+                        )
+                      ]);
+                } else {
+                  return FutureBuilder(
+                    future: (apiServices.getServices[0]).requestSites(),
+                    builder: (context, snapshot) {
+                      switch (snapshot.data) {
+                        case "Success":
                           sites = (apiServices.getServices[0]).getSites;
-                          log("MyHomePageState::Remote: building ListView \n ${sites.toString()} ${sites["name"]}");
-                          answer = Scaffold(
-                            body: Center(
-                              child: ListView.builder(
-                                itemCount: sites.length,
-                                itemBuilder: (context, index) => SizedBox(
-                                    height: 30,
-                                    child: Center(
-                                        child: TextButton(
-                                      child: Text(
-                                          "Site ${index.toString()} ${sites["name"].toString()}"),
-                                      onPressed: () {},
-                                    ))),
+                          log("MyHomePage::FutureBuilder: Snapshot info: ${snapshot.data.toString()}");
+                          return Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: ListView.builder(
+                                  itemCount: sites.length ~/ 2,
+                                  itemBuilder: (context, index) => SizedBox(
+                                      height: 30,
+                                      child: Center(
+                                          child: TextButton(
+                                        child: Text(
+                                            "Site ${(index + 1).toString()} ${sites["name"].toString()}"),
+                                        onPressed: () async {
+                                          Navigator.pushNamedAndRemoveUntil(
+                                              context,
+                                              siteViewRoute,
+                                              (route) => route.isFirst,
+                                              arguments: {
+                                                "apiServices": apiServices,
+                                                "siteId": sites["idSite"],
+                                                "siteTitle": sites["name"]
+                                              });
+                                        },
+                                      ))),
+                                ),
                               ),
-                            ),
+                              TextButton(
+                                  onPressed: () async {
+                                    await apiServices.getServices[0]
+                                        .disconnect();
+                                    setState(() {
+                                      isUserLoggedIn = false;
+                                    });
+                                  },
+                                  style: TextButton.styleFrom(
+                                      backgroundColor: ColorsExt.brown100,
+                                      foregroundColor: Colors.white,
+                                      shape: const ContinuousRectangleBorder(),
+                                      fixedSize: Size(
+                                          MediaQuery.of(context).size.width,
+                                          MediaQuery.of(context).size.width *
+                                                      0.1 <
+                                                  100
+                                              ? MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  0.15
+                                              : 50)),
+                                  child: const Text("Log out"))
+                            ],
                           );
-                        });
+
+                        default:
+                          return answer;
                       }
-                    }
-                  },
-                );
-
-                while (apiServices.getServices.isEmpty) {
-                  return answer;
+                    },
+                  );
                 }
-
-                return FutureBuilder(
-                  future: (apiServices.getServices[0]).requestSites(),
-                  builder: (context, snapshot) {
-                    switch (snapshot.data) {
-                      case "Success":
-                        sites = (apiServices.getServices[0]).getSites;
-                        answer = Scaffold(
-                          body: Center(
-                            child: ListView.builder(
-                              itemCount: sites.length ~/ 2,
-                              itemBuilder: (context, index) => SizedBox(
-                                  height: 30,
-                                  child: Center(
-                                      child: TextButton(
-                                    child: Text(
-                                        "Site ${(index + 1).toString()} ${sites["name"].toString()}"),
-                                    onPressed: () async {
-                                      Navigator.pushNamedAndRemoveUntil(
-                                          context,
-                                          siteViewRoute,
-                                          (route) => route.isFirst,
-                                          arguments: {
-                                            "apiServices": apiServices,
-                                            "siteId": sites["idSite"],
-                                            "siteTitle": sites["name"]
-                                          });
-                                    },
-                                  ))),
-                            ),
-                          ),
-                        );
-                        log("MyHomePage::FutureBuilder: Snapshot info: ${snapshot.data.toString()}");
-                        return answer;
-
-                      default:
-                        return answer;
-                    }
-                  },
-                );
               },
             ))
           ] //myTabs.map((Tab tab) {
@@ -682,9 +720,13 @@ class _MyHomePageState extends State<MyHomePage>
           throw ConnectionException(e.errorInfo);
         });
       } on ConnectionException catch (e) {
-        e.showErrorDialog(context, e.errorInfo);
+        // TODO: implement connection exception
+        //e.showErrorDialog(context, e.errorInfo);
+        log(e.toString());
       } on ReadingException catch (e) {
-        e.showErrorDialog(context, e.errorInfo);
+        // TODO: implement reading exception
+        //e.showErrorDialog(context, e.errorInfo);
+        log(e.toString());
       } catch (e) {
         log("Error: While trying to connect, an error was encoutered: ${e.toString()}");
       }

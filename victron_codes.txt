@@ -1,0 +1,298 @@
+pV1 L1 Voltage
+pE1 L1 Energy
+pV2 L2 Voltage
+pE2 -=-
+pS Status
+325 - inverter to acOut
+V/47 - Battery monitor voltage
+I/49 - battery monitor current
+CE/50 - battery monitor consumed amph
+SOC/51 - battery monitor state of charge in %
+TTG/52 - battery monitor time to go in h
+H1/55 - battery monitor deepest discharge in Ah
+H6/60 - battery monitor total Ah drawn
+H21/244 - battery monitor discharged energy in kWh
+H22/245 - battery monitor charged energy in kWh
+ScOR/583 - Solar charger off reason (enum)
+ScW/107 - Solar charger battery watts
+PVP/442 - Solar charger PV power
+YT/94 - Solar charger Yield today
+YY/96 - Solar charger Yield yesterday
+ss/571 - System state
+Pb/102 - PV to battery in kWh
+Pc/104 - PV to consumers
+Bc/105 - Battery to consumers
+Pdc/113 - PV - DC-coupled in W
+a1/131 - ac consumption L1 (phoenix inverter negative power val)
+g1/134 - grid L1 power in W
+bp/243 - battery power in W
+vp/254 - ve.bus charge power (or this is phoenix inverter neg pow val)
+bs/144 - battery state of charge from system view
+bst/215 - battery state(enum)
+ba/145 - battery consumed amph in Ah
+bt/146 - battery time to go from system view
+
+FROM TERMINAL
+
+d/1 - gatewayID
+[log] mi/386 - Productid
+[log] mn/387 - MachineName
+[log] v/2 - Fw Version
+[log] build/3 - Fw Build date
+[log] cp/453 - Capabilities
+[log] dg/985 - Default gateway
+[log] w/237 - Boot type
+[log] rss/154 - Remote support
+[log] rsIpPort/543 - Remote support IP and port
+[log] ipr/148 - Remote ip address
+[log] ip/149 - Local ip address
+[log] rtt/577 - D-Bus Round-trip time
+[log] au/150 - Auto update
+[log] ut/151 - Update to
+[log] us/558 - Update status
+[log] fr/278 - Free space rootfs
+[log] fd/279 - Free space data
+[log] vl/256 - VRM Log mode
+[log] TO/216 - VRM Log time offset
+[log] sl/255 - VRM Log interval
+[log] rdm/481 - VRM Log ram disk mode
+[log] al/257 - User access level
+[log] mb/258 - Modbus TCP service
+[log] mql/572 - MQTT Local (https)
+[log] mqli/573 - MQTT Local (http)
+[log] tw/250 - Two way communication
+[log] dm/262 - Demo modus on/off
+[log] tz/266 - Time zone
+[log] H4bs/332 - ESS battery life state
+[log] bol/454 - DVCC
+[log] H4as/333 - ESS battery life SOC limit
+[log] H4ms/334 - ESS Minimum SOC (unless grid fails)
+[log] sca/469 - ESS Scheduled Charging
+[log] Vl/269 - VNC Local
+[log] Vi/270 - VNC Internet
+[log] sb/261 - Battery monitor setting
+[log] abs/263 - Active battery service
+[log] shd/253 - Has DC system
+[log] si1/251 - AC Input 1
+[log] si2/252 - AC Input 2
+[log] shao/560 - Has AC out system
+[log] nr/692 - NodeRed
+[log] sk/693 - SignalK
+[log] umc/743 - DVCC user configured maximum charge current
+[log] umv/744 - DVCC user configured maximum charge voltage
+[log] hp/470 - Hung processes
+[log] zp/479 - Zombie processes
+[log] dps/480 - Data partition status
+[log] cRelay/306 - Relay 1 state
+[log] rf0/1046 - Relay 1 function
+[log] rf1/1047 - Relay 2 function
+[log] Ft/1015 - Accumulated runtime FischerPanda generators
+[log] Gt/1018 - Accumulated time for generic Generator
+[log] ePR/519 - Phase rotation
+[log] rt/581 - Waiting to perform relay test
+[log] vmk2/6 - mk2 version
+[log] pmk2/356 - Mk2 product name
+[log] vvv/264 - VE.Bus firmware version
+[log] vvp/265 - VE.Bus product id
+[log] vid/272 - VE.Bus ShortIDs
+[log] vmc/316 - VE.Bus connection
+[log] IV1/8 - Input voltage phase 1
+[log] II1/11 - Input current phase 1
+[log] IF1/14 - Input frequency 1
+[log] IP1/17 - Input power 1
+[log] OV1/20 - Output voltage phase 1
+[log] OI1/23 - Output current phase 1
+[log] OF/26 - Output frequency
+[log] OP1/29 - Output power 1
+[log] CV/32 - Voltage
+[log] CI/33 - Current
+[log] PC/34 - Phase count
+[log] AI/35 - Active input
+[log] S/40 - VE.Bus state
+[log] ERR/41 - VE.Bus Error
+[log] s/79 - Switch Position
+[log] sa/1106 - VE.Bus Switch Position Adjustable
+[log] eT/42 - Temperature
+[log] eL/43 - Low battery
+[log] eO/44 - Overload
+[log] eTS/389 - Temperatur sensor alarm
+[log] eVS/390 - Voltage sensor alarm
+[log] t1/317 - Energy AcIn1 to Inverter
+[log] t2/318 - Energy ACIn2 to Inverter
+[log] t3/319 - Energy ACIn1 to AcOut
+[log] t4/320 - Energy ACIn2 to AcOut
+[log] t5/321 - Energy Inverter to AcIn1
+[log] t6/322 - Energy Inverter to AcIn2
+[log] t7/323 - Energy AcOut to AcIn1
+[log] t8/324 - Energy AcOut to AcIn2
+[log] t9/325 - Inverter To AcOut
+[log] t10/326 - AcOut to Inverter
+[log] asT0/357 - Device 0 assistant list
+[log] eR/523 - High DC Ripple
+[log] eT1/344 - Temperature L1
+[log] eL1/345 - Low battery L1
+[log] eO1/346 - Overload L1
+[log] eR1/347 - High DC Ripple L1
+[log] eT2/348 - Temperature L2
+[log] eL2/349 - Low battery L2
+[log] eO2/350 - Overload L2
+[log] eR2/351 - High DC Ripple L2
+[log] eT3/352 - Temperature L3
+[log] eL3/353 - Low battery L3
+[log] eO3/354 - Overload L3
+[log] eR3/355 - High DC Ripple L3
+[log] vcs/557 - Charge state
+[log] q0/544 - VE.Bus netw. error count - unit 1
+[log] eV/649 - High DC Voltage
+[log] eC/650 - High DC Current
+[log] v0/651 - Device 0 High DC Voltage
+[log] d0/664 - Device 0 High DC Current
+[log] vs0/1107 - Serial number of 1st device
+[log] p0/719 - Device 0 Power-pack pre-overload
+[log] Bcn/585 - Battery custom name
+[log] BM/45 - Model
+[log] BV/46 - Firmware version
+[log] BSN/114 - Serial Number
+[log] V/47 - Voltage
+[log] I/49 - Current
+[log] CE/50 - Consumed Amphours
+[log] SOC/51 - State of charge
+[log] TTG/52 - Time to go
+[log] AL/119 - Low voltage alarm
+[log] AH/120 - High voltage alarm
+[log] ALS/121 - Low starter-voltage alarm
+[log] AHS/122 - High starter-voltage alarm
+[log] ASoc/123 - Low state-of-charge alarm
+[log] ALT/124 - Low battery temperature alarm
+[log] AHT/125 - High battery temperature alarm
+[log] AM/126 - Mid-voltage alarm
+[log] H1/55 - Deepest discharge
+[log] H2/56 - Last discharge
+[log] H3/57 - Average discharge
+[log] H4/58 - Charge cycles
+[log] H5/59 - Full discharges
+[log] H6/60 - Total Ah drawn
+[log] H7/61 - Minimum voltage
+[log] H8/62 - Maximum voltage
+[log] H9/63 - Time since last full charge
+[log] H10/64 - Automatic syncs
+[log] H11/65 - Low voltage alarms
+[log] H12/66 - High voltage alarms
+[log] H15/69 - Minimum starter voltage
+[log] H16/70 - Maximum starter voltage
+[log] H21/244 - Discharged Energy
+[log] H22/245 - Charged Energy
+[log] dH21/338 - Discharged Energy delta
+[log] dH22/339 - Charged Energy delta
+[log] ScOR/583 - Solar charger off reason
+[log] Sccn/586 - Solar charger custom name
+[log] ScM/106 - Solarcharger model
+[log] ScVt/80 - Solar charger version
+[log] ScSN/118 - Solar charger serial number
+[log] ScV/81 - Voltage
+[log] Scvs/1105 - Voltage setting
+[log] ScI/82 - Current
+[log] ScW/107 - Battery watts
+[log] SLs/241 - Load state
+[log] Scs/84 - Charger on/off
+[log] ScS/85 - Charge state
+[log] PVV/86 - PV voltage
+[log] PVI/87 - PV current
+[log] PVP/442 - PV power
+[log] ScMm/518 - MPPT State
+[log] SRelay/90 - Relay on the charger
+[log] SceL/92 - Low batt. voltage alarm
+[log] SceH/93 - High batt. voltage alarm
+[log] YT/94 - Yield today
+[log] MCPT/95 - Maximum charge power today
+[log] YY/96 - Yield yesterday
+[log] MCPY/97 - Maximum charge power yesterday
+[log] ScERR/98 - Error code
+[log] YU/285 - User yield
+[log] dYU/340 - User yield delta
+[log] ScOR/583 - Solar charger off reason
+[log] Sccn/586 - Solar charger custom name
+[log] ScM/106 - Solarcharger model
+[log] ScVt/80 - Solar charger version
+[log] ScSN/118 - Solar charger serial number
+[log] ScV/81 - Voltage
+[log] Scvs/1105 - Voltage setting
+[log] ScI/82 - Current
+[log] ScW/107 - Battery watts
+[log] SLs/241 - Load state
+[log] Scs/84 - Charger on/off
+[log] ScS/85 - Charge state
+[log] PVV/86 - PV voltage
+[log] PVI/87 - PV current
+[log] PVP/442 - PV power
+[log] ScMm/518 - MPPT State
+[log] SRelay/90 - Relay on the charger
+[log] SceL/92 - Low batt. voltage alarm
+[log] SceH/93 - High batt. voltage alarm
+[log] YT/94 - Yield today
+[log] MCPT/95 - Maximum charge power today
+[log] YY/96 - Yield yesterday
+[log] MCPY/97 - Maximum charge power yesterday
+[log] ScERR/98 - Error code
+[log] YU/285 - User yield
+[log] dYU/340 - User yield delta
+[log] ScOR/583 - Solar charger off reason
+[log] Sccn/586 - Solar charger custom name
+[log] ScM/106 - Solarcharger model
+[log] ScVt/80 - Solar charger version
+[log] ScSN/118 - Solar charger serial number
+[log] ScV/81 - Voltage
+[log] Scvs/1105 - Voltage setting
+[log] ScI/82 - Current
+[log] ScW/107 - Battery watts
+[log] SLs/241 - Load state
+[log] Scs/84 - Charger on/off
+[log] ScS/85 - Charge state
+[log] PVV/86 - PV voltage
+[log] PVI/87 - PV current
+[log] PVP/442 - PV power
+[log] ScMm/518 - MPPT State
+[log] SRelay/90 - Relay on the charger
+[log] SceL/92 - Low batt. voltage alarm
+[log] SceH/93 - High batt. voltage alarm
+[log] YT/94 - Yield today
+[log] MCPT/95 - Maximum charge power today
+[log] YY/96 - Yield yesterday
+[log] MCPY/97 - Maximum charge power yesterday
+[log] ScERR/98 - Error code
+[log] YU/285 - User yield
+[log] dYU/340 - User yield delta
+[log] Agl/559 - Grid alarm
+[log] i1/564 - AC Consumption on Input L1
+[log] o1/567 - AC Consumption on Output L1
+[log] st/570 - System type
+[log] ss/571 - System state
+[log] Pb/102 - PV to battery
+[log] ssls/472 - #1 Low SOC; discharge disabled
+[log] ssbl/473 - #2 BatteryLife is active
+[log] ssdc/475 - #3 Charge disabled by BMS
+[log] ssdd/474 - #4 Discharge disabled by BMS
+[log] sssc/476 - #5 Slow charge is active
+[log] ssuc/477 - #6 Charge disabled by user setting
+[log] ssud/478 - #7 Discharge disabled by user setting
+[log] Pc/104 - PV to consumers
+[log] Bc/105 - Battery to consumers
+[log] Pdc/113 - PV - DC-coupled
+[log] a1/131 - AC Consumption L1
+[log] g1/134 - Grid L1
+[log] bv/143 - Voltage
+[log] bc/147 - Current
+[log] vc/153 - VE.Bus charge current
+[log] bp/243 - Battery Power
+[log] vp/254 - VE.Bus charge power
+[log] bs/144 - Battery SOC
+[log] bst/215 - Battery state
+[log] ba/145 - Battery Consumed Amphours
+[log] bt/146 - Battery Time to Go
+[log] Amb/579 - DVCC Multiple batteries alarm
+[log] Af/580 - GX Error #48 DVCC with incompatible firmware
+[log] To/531 - Time off
+[log] Ti/534 - Time inverting
+[log] AIS/471 - AC-Input
+[log] ini/833 - Number of AC Inputs
+

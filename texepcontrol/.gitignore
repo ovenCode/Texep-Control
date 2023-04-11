@@ -8,6 +8,7 @@
 .buildlog/
 .history
 .svn/
+.txt
 migrate_working_dir/
 
 # IntelliJ related
@@ -45,4 +46,8 @@ app.*.map.json
 
 # Melos related
 pubspec_overrides.yaml
+
+# VS Code related
+.vscode/
+.code-workspace
 
